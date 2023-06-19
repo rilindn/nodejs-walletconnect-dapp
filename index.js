@@ -1,5 +1,8 @@
 const { SignClient } = require("@walletconnect/sign-client");
 const readline = require('readline');
+const logQrCode = require("./utils/log_qr_code");
+
+require('dotenv').config()
 
 let signClient = null;
 let session = [];
@@ -43,7 +46,9 @@ async function getURI() {
     });
 
     if (uri) {
-        console.log("🚀 This is your URI:", uri)
+        console.log("🚀 This is your URI:\n", uri)
+        logQrCode(uri)
+
         session = await approval();
         accounts = session.namespaces.eip155.accounts[0].slice(9)
         console.log("🚀 Sessions:", session)
