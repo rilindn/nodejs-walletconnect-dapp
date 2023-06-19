@@ -1,10 +1,11 @@
-const { SignClient } = require("@walletconnect/sign-client");
+const { Core } = require("@walletconnect/core");
+const { Web3Wallet } = require("@walletconnect/web3wallet");
 const readline = require('readline');
-const logQrCode = require("./utils/log_qr_code");
 
+const logQrCode = require("./utils/log_qr_code");
 require('dotenv').config()
 
-let signClient = null;
+let web3wallet = null;
 let session = [];
 let accounts = [];
 let transactions = [];
@@ -18,12 +19,16 @@ const metadata = {
 };
 
 async function initConn() {
-    signClient = await SignClient.init({
+    const core = new Core({
         projectId,
-        metadata
     });
 
-    signClient.on("session_delete", () => {
+    web3wallet = await Web3Wallet.init({
+        core, // <- pass the shared `core` instance
+        metadata,
+    });
+
+    web3wallet.engine.signClient.on("session_delete", () => {
         console.log("🚀 user disconnected the session from their wallet");
         session = []
         accounts = []
@@ -41,7 +46,7 @@ async function getURI() {
         },
     };
 
-    const { uri, approval } = await signClient.connect({
+    const { uri, approval } = await web3wallet.engine.signClient.connect({
         requiredNamespaces: proposalNamespace,
     });
 
@@ -66,7 +71,7 @@ async function handleSend() {
             gasLimit: "0x5208",
             value: "0x00",
         };
-        const result = await signClient.request({
+        const result = await web3wallet.engine.signClient.request({
             topic: session.topic,
             request: {
                 method: "eth_sendTransaction",
